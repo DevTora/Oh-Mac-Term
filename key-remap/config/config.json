@@ -1,0 +1,16 @@
+{
+  "apps": {
+    "com.apple.Terminal": {
+      "blocklist": ["vim", "nvim", "vi", "less", "more", "cat", "htop", "top", "btm", "man", "ssh"]
+    }
+  },
+  "rules": [
+    {
+      "apps": ["com.apple.Terminal"],
+      "key": "return",
+      "modifiers": ["shift"],
+      "notModifiers": ["alt", "ctrl", "cmd"],
+      "send": "\u001b[13;3u"
+    }
+  ]
+}

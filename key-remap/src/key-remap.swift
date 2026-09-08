@@ -312,6 +312,10 @@ let tapCallback: CGEventTapCallBack = { _, type, event, _ in
 
 // MARK: - Main
 
+if CommandLine.arguments.contains("--check-permission") {
+    exit(AXIsProcessTrusted() ? 0 : 1)
+}
+
 if !AXIsProcessTrusted() {
     let opts = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
     _ = AXIsProcessTrustedWithOptions(opts)
@@ -322,8 +326,6 @@ if !AXIsProcessTrusted() {
         exit(1)
     }
 }
-
-if CommandLine.arguments.contains("--check-permission") { exit(0) }
 
 let lockFD = open("/tmp/key-remap.lock", O_CREAT | O_RDWR, 0o644)
 if lockFD == -1 {

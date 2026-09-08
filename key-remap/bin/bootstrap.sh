@@ -8,4 +8,6 @@ trap 'rm -rf "$BUILD_DIR"' EXIT
 
 curl -fsSL "$REPO_URL" | tar xz -C "$BUILD_DIR"
 
-"$BUILD_DIR/Oh-Mac-Term-main/key-remap/bin/install.sh"
+INSTALL="$(find "$BUILD_DIR" -maxdepth 4 -path '*/key-remap/bin/install.sh')"
+[[ -n "$INSTALL" && -f "$INSTALL" ]] || { echo "install.sh not found in fetched repo" >&2; exit 1; }
+"$INSTALL"

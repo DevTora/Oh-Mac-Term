@@ -1,8 +1,18 @@
 # key-remap daemon manager
-if ! pgrep -qf "/\.local/bin/key-remap" >/dev/null 2>&1; then
-  mkdir -p ~/.local/var/log
-  ~/.local/bin/key-remap >>~/.local/var/log/key-remap.log 2>&1 &!
+
+# The daemon is managed by LaunchAgent (com.devtora.key-remap) and starts at
+# login. Do not spawn it from shells: the accessibility prompt would be
+# misattributed to the terminal app. Start/restart manually instead:
+
+# Make the bare `key-remap` command resolve to ~/.local/bin/key-remap.
+
+if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+  export PATH="$HOME/.local/bin:$PATH"
 fi
+
+key-remap-start() {
+  launchctl kickstart gui/$UID/com.devtora.key-remap && echo "key-remap started"
+}
 
 key-remap-reload() {
   local pid; pid=$(pgrep -f "/\.local/bin/key-remap" 2>/dev/null)

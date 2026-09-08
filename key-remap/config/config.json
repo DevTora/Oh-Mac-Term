@@ -1,9 +1,4 @@
 {
-  "apps": {
-    "com.apple.Terminal": {
-      "blocklist": ["vim", "nvim", "vi", "less", "more", "cat", "htop", "top", "btm", "man", "ssh"]
-    }
-  },
   "rules": [
     {
       "apps": ["com.apple.Terminal"],

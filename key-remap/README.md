@@ -19,7 +19,7 @@ Default rule: in Terminal.app, pressing **Shift+Enter** inserts a newline (nicer
 Quick install (requires only `curl`, no git needed):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/DevTora/Oh-Mac-Term/main/key-remap/bin/bootstrap.sh | bash
+bash <(curl -fsSL https://raw.githubusercontent.com/DevTora/Oh-Mac-Term/main/key-remap/bin/bootstrap.sh)
 ```
 
 Or clone and install manually:
@@ -34,14 +34,15 @@ install.sh will:
 
 1. Check environment (macOS + Swift)
 2. Compile `key-remap.swift` to `~/.local/bin/key-remap`
-3. Install default config to `~/.config/key-remap/config.json` (skipped if present)
-4. Install zsh integration scripts to `~/.zshrc.d/` and add the loader line to `~/.zshrc`
-5. Check accessibility permission (a dialog appears on first run; allow Terminal)
-6. Start the daemon
+3. Install zsh integration scripts (`key-remap.zsh`, `shift-enter.zsh`) to `~/.zshrc.d/`
+4. Install default config to `~/.config/key-remap/config.json`
+5. Add the `.zshrc.d` loader to `~/.zshrc` if it does not load it already
+6. Install a LaunchAgent (`com.devtora.key-remap`) so the daemon starts at login
+7. Check accessibility permission (a dialog naming **key-remap** appears on first run; grant it in the opened Accessibility pane — macOS shows no Allow button for ad-hoc binaries)
 
-> Re-running install.sh when already installed reinstalls: it overwrites the binary and zsh scripts but **keeps your edited config**. Interactively it asks for confirmation; when stdin is not a tty (e.g. `curl ... | bash`) it reinstalls directly.
+Re-running install.sh when already installed asks for confirmation (default: skip). The binary is always rebuilt; **key-remap.zsh is always updated**, while `config.json` and `shift-enter.zsh` are refreshed only when their content is unchanged — if you've customized either, you'll be asked whether to overwrite (default: keep). The installer requires an interactive terminal, so use `bash <(curl -fsSL .../bin/bootstrap.sh)` for a quick (re)install.
 
-> If the permission check fails, grant accessibility permission and run `~/.local/bin/key-remap &` — no need to re-run the installer.
+> If the permission check fails, grant accessibility permission (System Settings → Privacy & Security → Accessibility → add `~/.local/bin/key-remap`) and run `launchctl kickstart gui/$UID/com.devtora.key-remap` — no need to re-run the installer.
 
 ## Configuration
 
@@ -69,7 +70,7 @@ Config file: `~/.config/key-remap/config.json`
 Field reference:
 
 | Field | Meaning |
-|---|---|
+| --- | --- |
 | `apps` | Per-app settings, key is the app bundle id (e.g. `com.apple.Terminal`) |
 | `apps.*.blocklist` | Child-process blacklist. Remapping is disabled for the app while these run (**currently disabled**, see [Blocklist status](#blocklist-status)) |
 | `rules[].apps` | Bundle ids where the rule applies |
@@ -104,24 +105,48 @@ To use a custom config path instead of the default `~/.config/key-remap/config.j
 
 ## Uninstall
 
+Quick uninstall (requires only `curl`, no git needed):
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/DevTora/Oh-Mac-Term/main/key-remap/bin/uninstall.sh)
+```
+
+Or clone and uninstall manually:
+
 ```bash
 cd Oh-Mac-Term/key-remap
 ./bin/uninstall.sh
 ```
 
-Removes the daemon, binary, config, and zsh integration scripts. The loader line is removed from `~/.zshrc` **only if** `~/.zshrc.d` becomes empty; if other scripts remain there, the loader is kept.
+Removes the LaunchAgent, stops the daemon, deletes the binary and `key-remap.zsh`, and clears the singleton lock. Config, log and `shift-enter.zsh` are kept by default (the script prompts before removing them). The loader line is removed from `~/.zshrc` **only if** `~/.zshrc.d` becomes empty; if other scripts remain there, the loader is kept. The uninstaller requires an interactive terminal and refuses to run when stdin is not a tty, so always use `bash <(curl -fsSL ...)` — not `curl ... | bash`.
+
+> The TCC accessibility entry cannot be reset via `tccutil` (path-based client has no bundle id). When run interactively, uninstall.sh opens System Settings so you can remove the **key-remap** entry manually (select it, press `-`).
 
 ## Permission
 
-key-remap needs the **Accessibility** permission. install.sh shows an authorization dialog; allow Terminal. key-remap inherits the permission of the terminal app that launches it.
+key-remap needs the **Accessibility** permission. The daemon runs via LaunchAgent, so the request is made by key-remap itself: on first launch a dialog naming **key-remap** appears. macOS shows no Allow button for ad-hoc binaries — grant it in the opened System Settings pane instead.
 
-Manual grant: System Settings → Privacy & Security → Accessibility → add Terminal.app.
+Manual grant: System Settings → Privacy & Security → Accessibility → add `~/.local/bin/key-remap`.
 
-Check permission:
+If re-granting fails and no dialog ever appears, a stale TCC entry from an earlier install may be blocking the request: remove the old **key-remap** entry in the Accessibility list (select it, press `-`), then add it again.
+
+After granting, restart the daemon:
+
+```bash
+launchctl kickstart gui/$UID/com.devtora.key-remap
+```
+
+Check permission (exit code `0` = granted, `1` = denied; read-only, triggers no dialog):
 
 ```bash
 ~/.local/bin/key-remap --check-permission
 ```
+
+> When run from a shell, TCC attributes even this read-only check to the hosting terminal app, so the result may reflect the terminal's own accessibility state rather than key-remap's. The authoritative check is whether the daemon stays running: `pgrep -f "\.local/bin/key-remap"`.
+
+Hence, launching it from a shell is unsafe:
+
+> Do not start the binary directly from a shell: macOS attributes the accessibility prompt to the responsible terminal app (the historical source of misattributed dialogs). Use the LaunchAgent or `key-remap-start` instead.
 
 ## Log
 

@@ -10,7 +10,7 @@ A system-level keyboard remapping tool. It intercepts keyboard events at the sys
 
 - **Default rule**: in Terminal.app, **Shift+Enter** inserts a newline; **Ctrl+J** is a pure-zsh fallback
 - **Features**: JSON-driven config, single binary, SIGHUP hot reload (blocklist child-process exemption currently disabled)
-- **Install**: `curl -fsSL https://raw.githubusercontent.com/DevTora/Oh-Mac-Term/main/key-remap/bin/bootstrap.sh | bash`
+- **Install**: `bash <(curl -fsSL https://raw.githubusercontent.com/DevTora/Oh-Mac-Term/main/key-remap/bin/bootstrap.sh)`
 - **Docs**: [key-remap/README.md](key-remap/README.md)
 
 ### freezeterm

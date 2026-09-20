@@ -6,9 +6,7 @@
 
 # Make the bare `key-remap` command resolve to ~/.local/bin/key-remap.
 
-if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
-  export PATH="$HOME/.local/bin:$PATH"
-fi
+path=( "$HOME/.local/bin" ${path:#$HOME/.local/bin} )
 
 key-remap-start() {
   launchctl kickstart gui/$UID/com.devtora.key-remap && echo "key-remap started"
